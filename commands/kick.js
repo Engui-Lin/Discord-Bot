@@ -17,19 +17,21 @@ module.exports = {
 
         const memberTarget = message.guild.members.cache.get(target.id);
 
+        if (!memberTarget.kickable) {
+            return message.reply('I cannot kick this person');
+        }
         if (target == message.author){
             return message.reply('It\'s not a good idea to kick yourself baka!');
         }
         else if (kicker.roles.highest.comparePositionTo(memberTarget.roles.highest) < 0){
             return message.reply('You do not have enough permission to kick this memeber');
         }
-        else if (!target.kickable) {
-            return message.reply('I cannot kick this person');
-        }
+        // else if (message.guild.me.roles.highest.comparePositionTo(memberTarget.roles.highest) < 0){
+        //     return message.reply('I do not have enough permission to kick this memeber');
+        // }
         else {
-
             memberTarget.kick();
-            return  message.channel.send('User has been kicked');
+            return message.channel.send('User has been kicked');
         }
     }
 }
