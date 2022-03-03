@@ -46,17 +46,9 @@ module.exports = {
             audioPlayer.play(resource);
             connection.subscribe(audioPlayer);
             
-            const myP = new Promise((resolve,reject) => {
-                setTimeout(() => {
-                    audioPlayer.pause();
-                    setTimeout(() => {audioPlayer.unpause()}, 3000);
-                }, 2000);
-            });
-            
-
-            // connection.on('stateChange', (oldState, newState) => {
-            //     console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
-            //     });
+            connection.on('stateChange', (oldState, newState) => {
+                console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
+                });
             audioPlayer.on('stateChange', (oldState, newState) => {
                 console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
                 });
