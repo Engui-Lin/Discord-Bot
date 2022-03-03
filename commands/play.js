@@ -1,6 +1,7 @@
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, NoSubscriberBehavior } = require('@discordjs/voice');
+const { MessageEmbed } = require('discord.js');
 
 module.exports = {
     name: 'play',
@@ -23,6 +24,11 @@ module.exports = {
             return (videoResults.videos.length > 1) ? videoResults.videos[0] : null;
         }
         
+        // const validURL = (str) => {
+        //     var regex = /(http|https):\/\/(w+:{0,1}\w*)?
+        // }
+        
+        
         const video = await videoFinder(args.join(' '));
 
         if (video) {
@@ -38,7 +44,7 @@ module.exports = {
                     noSubscriber: NoSubscriberBehavior.Pause,
                 },
             });
-
+            
             const stream = await ytdl(video.url, {filter: 'audioonly'});
 
             const resource = createAudioResource(stream);
@@ -46,15 +52,26 @@ module.exports = {
             audioPlayer.play(resource);
             connection.subscribe(audioPlayer);
             
-            connection.on('stateChange', (oldState, newState) => {
-                console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
-                });
+            const newEmbed = new MessageEmbed()
+            .setDescription(`Now playing: [***${video.title}***](${video.url})`)
+            message.channel.send({embeds: [newEmbed]});
+            
+            // connection.on('stateChange', (oldState, newState) => {
+            //     console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
+            //     });
             audioPlayer.on('stateChange', (oldState, newState) => {
                 console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
                 });
-            console.log("Bot's up and running'!");
-            audioPlayer.on('idle', () => {connection.destroy()});
 
+            audioPlayer.on('idle', () => {
+                setTimeout(()=>{
+                    if (audioPlayer.state.status == 'idle'){
+                        console.log('idle starts........')
+                        connection.destroy();
+                        console.log('Disconnected from voice channel...');
+                    }
+                    }, 60000);
+                });
         }
         else{
             message.channel.send('No results found...');
