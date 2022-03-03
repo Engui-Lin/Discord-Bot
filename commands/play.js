@@ -1,6 +1,6 @@
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
-const { joinVoiceChannel } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
 
 module.exports = {
     name: 'play',
@@ -18,12 +18,6 @@ module.exports = {
 
         if (!args.length) return message.reply('Please specify what you want to play');
 
-        const connection = await joinVoiceChannel({
-            channelId: voiceChannel.id,
-            guildId: message.guild.id,
-            adapterCreator: message.guild.voiceAdapterCreator,
-        });
-
         const videoFinder = async (query) => {
             const videoResults = await ytSearch(query);
             return (videoResults.videos.length > 1) ? videoResults.videos[0] : null;
@@ -32,11 +26,30 @@ module.exports = {
         const video = await videoFinder(args.join(' '));
 
         if (video) {
-            const stream = ytdl(video.url, {filter: 'audioonly'});
-            connection.subscribe(stream, {seek: 0, volume: 1})
-            .on('finish', () =>{
-                connection.destroy();
-            })
+
+            const connection = await joinVoiceChannel({
+                channelId: voiceChannel.id,
+                guildId: message.guild.id,
+                adapterCreator: message.guild.voiceAdapterCreator,
+            });
+    
+            const audioPlayer = createAudioPlayer();
+
+            const stream = await ytdl(video.url, {filter: 'audioonly'});
+
+            const testT = createAudioResource(stream);
+
+            audioPlayer.play(testT);
+            connection.subscribe(audioPlayer);
+
+            // connection.on('stateChange', (oldState, newState) => {
+            //     console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
+            //     });
+            audioPlayer.on('stateChange', (oldState, newState) => {
+                console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
+                });
+            console.log("Bot's up and runnin'!");
+
         }
     }
 }
