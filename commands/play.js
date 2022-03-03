@@ -1,6 +1,6 @@
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, NoSubscriberBehavior } = require('@discordjs/voice');
 
 module.exports = {
     name: 'play',
@@ -27,20 +27,32 @@ module.exports = {
 
         if (video) {
 
-            const connection = await joinVoiceChannel({
+            const connection = joinVoiceChannel({
                 channelId: voiceChannel.id,
                 guildId: message.guild.id,
                 adapterCreator: message.guild.voiceAdapterCreator,
             });
     
-            const audioPlayer = createAudioPlayer();
+            const audioPlayer = createAudioPlayer({
+                behaviors : {
+                    noSubscriber: NoSubscriberBehavior.Pause,
+                },
+            });
 
             const stream = await ytdl(video.url, {filter: 'audioonly'});
 
-            const testT = createAudioResource(stream);
+            const resource = createAudioResource(stream);
 
-            audioPlayer.play(testT);
+            audioPlayer.play(resource);
             connection.subscribe(audioPlayer);
+            
+            const myP = new Promise((resolve,reject) => {
+                setTimeout(() => {
+                    audioPlayer.pause();
+                    setTimeout(() => {audioPlayer.unpause()}, 3000);
+                }, 2000);
+            });
+            
 
             // connection.on('stateChange', (oldState, newState) => {
             //     console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
@@ -48,8 +60,12 @@ module.exports = {
             audioPlayer.on('stateChange', (oldState, newState) => {
                 console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
                 });
-            console.log("Bot's up and runnin'!");
+            console.log("Bot's up and running'!");
+            audioPlayer.on('idle', () => {connection.destroy()});
 
         }
+        else{
+            message.channel.send('No results found...');
+        } 
     }
 }
