@@ -32,7 +32,7 @@ module.exports = {
 
         const newEmbed = new MessageEmbed()
         .setTitle(guild.name)
-        .setThumbnail(guild.iconURL())
+        .setThumbnail(guild.iconURL({dynamic: true}))
         .setDescription(`
         Server ID: ${guild.id}
         Owner: ${owner.user.tag}
